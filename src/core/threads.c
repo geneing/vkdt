@@ -4,13 +4,51 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <assert.h>
-#include <sys/syscall.h>
 #include <errno.h>
 #include <stdatomic.h>
 #include <string.h>
 #include <unistd.h>
 #include <sched.h>
 #include <pthread.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#elif MACOS
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#else
+#include <unistd.h>
+#endif
+
+int getNumberOfCores()
+{
+#ifdef WIN32
+  SYSTEM_INFO sysinfo;
+  GetSystemInfo(&sysinfo);
+  return sysinfo.dwNumberOfProcessors;
+#elif MACOS
+  int nm[2];
+  size_t len = 4;
+  uint32_t count;
+
+  nm[0] = CTL_HW;
+  nm[1] = HW_AVAILCPU;
+  sysctl(nm, 2, &count, &len, NULL, 0);
+
+  if (count < 1)
+  {
+    nm[1] = HW_NCPU;
+    sysctl(nm, 2, &count, &len, NULL, 0);
+    if (count < 1)
+    {
+      count = 1;
+    }
+  }
+  return count;
+#else
+  return sysconf(_SC_NPROCESSORS_ONLN);
+#endif
+}
 
 threads_t thr;
 _Thread_local threads_tls_t thr_tls;
@@ -198,7 +236,7 @@ int threads_task(
 
 void threads_global_init()
 {
-  thr.num_threads = sysconf(_SC_NPROCESSORS_ONLN);
+  thr.num_threads = getNumberOfCores();
   thr.shutdown = 0;
   thr.task_max = thr.num_threads * 10;
   thr.task     = malloc(sizeof(threads_task_t)*thr.task_max);

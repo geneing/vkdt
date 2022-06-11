@@ -43,8 +43,8 @@ dt_graph_init(dt_graph_t *g)
   g->module = calloc(sizeof(dt_module_t), g->max_modules);
   g->max_nodes = 4000;
   g->node = calloc(sizeof(dt_node_t), g->max_nodes);
-  dt_vkalloc_init(&g->heap, 8000, 1ul<<40); // bytesize doesn't matter
-  dt_vkalloc_init(&g->heap_staging, 100, 1ul<<40);
+  dt_vkalloc_init(&g->heap, 8000, ((uint64_t)1)<<40); // bytesize doesn't matter
+  dt_vkalloc_init(&g->heap_staging, 100, ((uint64_t)1)<<40);
   g->params_max = 16u<<20;
   g->params_end = 0;
   g->params_pool = calloc(sizeof(uint8_t), g->params_max);
@@ -2472,7 +2472,7 @@ VkResult dt_graph_run(
                 vkResetFences(qvk.device, 1, &graph->command_fence);
                 QVKR(vkQueueSubmit(graph->queue, 1, &submit, graph->command_fence));
                 if(run & s_graph_run_wait_done) // timeout in nanoseconds, 30 is about 1s
-                  QVKR(vkWaitForFences(qvk.device, 1, &graph->command_fence, VK_TRUE, 1ul<<40));
+                  QVKR(vkWaitForFences(qvk.device, 1, &graph->command_fence, VK_TRUE, ((uint64_t)1) << 40));
                 if(graph->queue == qvk.queue_graphics)
                   threads_mutex_unlock(&qvk.queue_mutex);
                 QVKR(vkBeginCommandBuffer(graph->command_buffer, &begin_info));
@@ -2558,7 +2558,7 @@ VkResult dt_graph_run(
     vkResetFences(qvk.device, 1, &graph->command_fence);
     QVKR(vkQueueSubmit(graph->queue, 1, &submit, graph->command_fence));
     if(run & s_graph_run_wait_done) // timeout in nanoseconds, 30 is about 1s
-      QVKR(vkWaitForFences(qvk.device, 1, &graph->command_fence, VK_TRUE, 1ul<<40));
+      QVKR(vkWaitForFences(qvk.device, 1, &graph->command_fence, VK_TRUE, ((uint64_t)1) << 40));
     if(graph->queue == qvk.queue_graphics)
       threads_mutex_unlock(&qvk.queue_mutex);
   }

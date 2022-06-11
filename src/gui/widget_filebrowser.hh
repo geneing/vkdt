@@ -1,6 +1,7 @@
 #pragma once
 
 #include <dirent.h>
+#include "core/compat.h"
 
 // store some state
 struct dt_filebrowser_widget_t
@@ -37,8 +38,10 @@ dt_filebrowser_cleanup(
 
 int dt_filebrowser_filter_dir(const struct dirent *d)
 {
-  if(d->d_name[0] == '.' && d->d_name[1] != '.') return 0; // filter out hidden files
-  if(d->d_type != DT_DIR) return 0; // filter out non-dirs too
+  if(d->d_name[0] == '.' && d->d_name[1] != '.') 
+    return 0; // filter out hidden files
+  if( !is_dir(d->d_name) ) 
+    return 0; // filter out non-dirs too
   return 1;
 }
 
@@ -92,12 +95,12 @@ dt_filebrowser_display(
     {
       char name[260];
       snprintf(name, sizeof(name), "%s %s",
-          w->ent[i]->d_type == DT_DIR ? "[d]":"[f]", w->ent[i]->d_name);
+          is_dir(w->ent[i]->d_name) ? "[d]":"[f]", w->ent[i]->d_name);
       int selected = w->ent[i]->d_name == w->selected;
       if(ImGui::Selectable(name, selected, ImGuiSelectableFlags_DontClosePopups))
       {
         w->selected = w->ent[i]->d_name; // mark as selected
-        if(w->ent[i]->d_type == DT_DIR)
+        if( is_dir(w->ent[i]->d_name) )
         { // directory clicked
           // change cwd by appending to the string..
           int len = strnlen(w->cwd, sizeof(w->cwd));

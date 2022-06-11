@@ -4,7 +4,7 @@
 #include "core/log.h"
 #include <libgen.h>
 #include <unistd.h>
-
+#include "core/compat.h"
 
 // helper to the helpers reading parameters in full, subsets, or for keyframes.
 static inline int

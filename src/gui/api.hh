@@ -2,6 +2,7 @@
 #include "imgui.h"
 extern "C" {
 #include "api.h"
+#include "core/compat.h"
 }
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -301,7 +302,7 @@ dt_gui_dr_modals()
     {
       char filename[PATH_MAX+100];
       snprintf(filename, sizeof(filename), "%s/presets", vkdt.db.basedir);
-      mkdir(filename, 0755);
+      mkdir_(filename, 0755);
       snprintf(filename, sizeof(filename), "%s/presets/%s.pst", vkdt.db.basedir, preset);
       FILE *f = fopen(filename, "wb");
       if(f)
@@ -355,7 +356,7 @@ dt_gui_dr_modals()
     { // open preset directory
       char dirname[PATH_MAX+20];
       snprintf(dirname, sizeof(dirname), "%s/data/presets", dt_pipe.basedir);
-      ent_cnt = scandir(dirname, &ent, 0, alphasort);
+      ent_cnt = scandir(dirname, &ent, 0, &alphasort);
       snprintf(dirname, sizeof(dirname), "%s/presets", vkdt.db.basedir);
       ent_local_cnt = scandir(dirname, &ent_local, 0, alphasort);
       if(ent_local_cnt == -1) ent_local_cnt = 0; // fine, you don't have user presets

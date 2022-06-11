@@ -9,7 +9,7 @@ extern "C" {
 #include "gui/darkroom-util.h"
 #include "db/thumbnails.h"
 #include "db/rc.h"
-extern int g_busy;  // when does gui go idle. this is terrible, should put it in vkdt.gui_busy properly.
+extern int g_busy; // when does gui go idle. this is terrible, should put it in vkdt.gui_busy properly.
 }
 #include "gui/api.hh"
 #include "gui/hotkey.hh"
@@ -35,6 +35,7 @@ extern int g_busy;  // when does gui go idle. this is terrible, should put it in
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "core/compat.h"
 
 namespace { // anonymous gui state namespace
 
@@ -722,16 +723,17 @@ dont_update_time:;
     if(main_imgid != -1u)
     {
       dt_db_image_path(&vkdt.db, main_imgid, filename, sizeof(filename));
-      struct stat buf;
-      lstat(filename, &buf);
-      if(((buf.st_mode & S_IFMT)== S_IFLNK) && ImGui::Button("jump to original collection", size))
+      if(is_link(filename) && ImGui::Button("jump to original collection", size))
       {
-        char *resolved = realpath(filename, 0);
+        char *resolved = realpath_(filename, 0, 0);
         if(resolved)
         {
           char *c = 0;
-          for(int i=0;resolved[i];i++) if(resolved[i] == '/') c = resolved+i;
-          if(c) *c = 0; // get dirname, i.e. strip off image file name
+          for(int i=0;resolved[i];i++) 
+            if(resolved[i] == '/') 
+              c = resolved+i;
+          if(c) 
+            *c = 0; // get dirname, i.e. strip off image file name
           dt_gui_switch_collection(resolved);
           free(resolved);
         }
@@ -794,7 +796,7 @@ dont_update_time:;
       for(uint32_t i=0;i<vkdt.db.selection_cnt;i++)
       {
         dt_db_image_path(&vkdt.db, sel[i], filename, sizeof(filename));
-        realpath(filename, realname);
+        realpath_(filename, realname, PATH_MAX);
         unlink(realname);
         dt_thumbnails_invalidate(&vkdt.thumbnail_gen, filename);
       }
@@ -832,7 +834,7 @@ dont_update_time:;
           "module:hist:01\n"
           "module:display:hist\n"
           "module:display:main\n");
-      realpath(filename, realname);
+      realpath_(filename, realname, PATH_MAX);
       char *base = basename(realname);
       base[strlen(base)-4] = 0;
       fprintf(f, "param:i-raw:main:filename:%s\n", base);
@@ -841,7 +843,7 @@ dont_update_time:;
       {
         if(sel[i] == main_imgid) continue;
         dt_db_image_path(&vkdt.db, sel[i], filename, sizeof(filename));
-        realpath(filename, realname);
+        realpath_(filename, realname, PATH_MAX);
         char *base = basename(realname);
         base[strlen(base)-4] = 0;
         fprintf(f, "param:i-raw:%02d:filename:%s\n", ii, base);
@@ -985,12 +987,13 @@ uint64_t render_module(dt_graph_t *graph, dt_module_t *module, int connected)
               gui.block_token[4], gui.block_token[5], gui.block_token[6]);
           gui.state = gui_state_data_t::s_gui_state_regular;
           err = -1ul;
-          if(cerr) err = (1ul<<32) | cerr;
+          if(cerr) err = ((uint64_t)1<<32) | cerr;
           else vkdt.graph_dev.runflags = s_graph_run_all;
         }
-        else err = 2ul<<32; // no input/output chain
+        else err = (uint64_t)2<<32; // no input/output chain
       }
-      else err = 2ul<<32; // no input/output chain
+      else
+        err = (uint64_t)2 << 32; // no input/output chain
       insert_modid_before = -1;
     }
   }
@@ -1010,13 +1013,16 @@ uint64_t render_module(dt_graph_t *graph, dt_module_t *module, int connected)
           cerr = dt_module_connect(graph, m_prev, c_prev, m_new, c_new_in);
           if(!cerr)
             cerr = dt_module_connect(graph, m_new, c_new_out, m_our, c_our_in);
-          err = -1ul;
-          if(cerr) err = (1ul<<32) | cerr;
+          err = (uint64_t)-1;
+          if(cerr)
+            err = ((uint64_t)1 << 32) | cerr;
           else vkdt.graph_dev.runflags = s_graph_run_all;
         }
-        else err = 2ul<<32; // no input/output chain
+        else
+          err = (uint64_t)2 << 32; // no input/output chain
       }
-      else err = 2ul<<32; // no input/output chain
+      else
+        err = (uint64_t)2 << 32; // no input/output chain
       insert_modid_before = -1;
     }
   }
@@ -1042,15 +1048,20 @@ uint64_t render_module(dt_graph_t *graph, dt_module_t *module, int connected)
             if(!cerr)
               cerr = dt_module_connect(graph, m_our, c_our_out, m_sscc, c_sscc);
             err = -1ul;
-            if(cerr) err = (1ul<<32) | cerr;
+            if(cerr)
+              err = ((uint64_t)1 << 32) | cerr;
             else vkdt.graph_dev.runflags = s_graph_run_all;
           }
-          else err = 2ul<<32; // no input/output
+          else
+            err = (uint64_t)2 << 32; // no input/output
         }
-        else err = 3ul<<32; // no unique after
+        else
+          err = (uint64_t)3 << 32; // no unique after
       }
-      else if(m_prev == -1) err = 2ul<<32;
-      else if(cnt != 1) err = 3ul<<32;
+      else if(m_prev == -1)
+        err = (uint64_t)2 << 32;
+      else if(cnt != 1)
+        err = (uint64_t)3 << 32;
     }
     ImGui::SameLine();
     if(ImGui::Button("move down", fsize))
@@ -1073,15 +1084,19 @@ uint64_t render_module(dt_graph_t *graph, dt_module_t *module, int connected)
             for(int k=0;k<cnt;k++)
               if(!cerr)
                 cerr = dt_module_connect(graph, m_prev, c_prev, m_after[k], c_after[k]);
-            err = -1ul;
-            if(cerr) err = (1ul<<32) | cerr;
+            err = (uint64_t)-1;
+            if(cerr)
+              err = ((uint64_t)1 << 32) | cerr;
             else vkdt.graph_dev.runflags = s_graph_run_all;
           }
-          else err = 2ul<<32; // no input/output chain
+          else
+            err = (uint64_t)2 << 32; // no input/output chain
         }
-        else err = 2ul<<32;
+        else
+          err = (uint64_t)2 << 32;
       }
-      else err = 2ul<<32;
+      else
+        err = (uint64_t)2 << 32;
     }
     if(ImGui::Button("disconnect", fsize))
     {
@@ -1100,11 +1115,13 @@ uint64_t render_module(dt_graph_t *graph, dt_module_t *module, int connected)
         for(int k=0;k<cnt;k++)
           if(!cerr)
             cerr = dt_module_connect(graph, m_prev, c_prev, m_after[k], c_after[k]);
-        err = -1ul;
-        if(cerr) err = (1ul<<32) | cerr;
+        err = (uint64_t)-1;
+        if(cerr)
+          err = ((uint64_t)1 << 32) | cerr;
         else vkdt.graph_dev.runflags = s_graph_run_all;
       }
-      else err = 2ul<<32; // no unique input/output chain
+      else
+        err = (uint64_t)2 << 32; // no unique input/output chain
     }
   }
   else if(!connected)
@@ -1162,8 +1179,10 @@ uint64_t render_module(dt_graph_t *graph, dt_module_t *module, int connected)
               cerr = dt_module_connect(graph, -1, -1, mod[1], con[1]);
             else
               cerr = dt_module_connect(graph, mod[0], con[0], mod[1], con[1]);
-            if(cerr) err = (1ul<<32) | cerr;
-            else vkdt.graph_dev.runflags = s_graph_run_all;
+            if(cerr)
+              err = ((uint64_t)1 << 32) | cerr;
+            else 
+              vkdt.graph_dev.runflags = s_graph_run_all;
             con[0] = con[1] = mod[0] = mod[1] = -1;
           }
         }
@@ -1949,7 +1968,7 @@ void render_darkroom_pipeline()
     else if(e == 16)
       ImGui::Text("module could not be added");
     else
-      ImGui::Text("unknown error %lu %lu", last_err >> 32, last_err & -1u);
+      ImGui::Text("unknown error %llu %llu", last_err >> 32, last_err & (uint64_t)-1);
   }
   else ImGui::Text("no error");
 
@@ -2029,7 +2048,7 @@ void render_darkroom_pipeline()
   static char mod_inst[10] = "01"; ImGui::InputText("instance", mod_inst, 8);
   if(ImGui::Button("add module"))
     if(dt_module_add(graph, dt_token(vkdt.wstate.module_names[add_modid]), dt_token(mod_inst)) == -1)
-      last_err = 16ul<<32;
+      last_err = (uint64_t)16<<32;
 
   static dt_filebrowser_widget_t filebrowser = {{0}};
   // add block (read cfg snipped)

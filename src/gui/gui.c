@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include "core/compat.h"
 
 static void
 style_to_state()
@@ -426,14 +427,14 @@ dt_gui_read_tags()
   struct dirent *ep;
   while((ep = readdir(dir)))
   {
-    if(ep->d_type == DT_DIR)
+    if(is_dir(ep->d_name))
     {
       if(!strcmp(ep->d_name, "." )) continue;
       if(!strcmp(ep->d_name, "..")) continue;
       struct stat buf;
       snprintf(filename, sizeof(filename), "%s/tags/%s", vkdt.db.basedir, ep->d_name);
       stat(filename, &buf);
-      uint64_t t = buf.st_mtim.tv_sec;
+      uint64_t t = buf.st_mtime;
       if(vkdt.tag_cnt < sizeof(vkdt.tag)/sizeof(vkdt.tag[0]))
       { // add
         int i = vkdt.tag_cnt++;

@@ -1,6 +1,8 @@
 #pragma once
 
+#ifndef __MINGW32__
 #include <alloca.h>
+#endif
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>

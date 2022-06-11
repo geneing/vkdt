@@ -22,7 +22,14 @@ GUI_H=gui/gui.h\
       gui/lighttable.h\
       pipe/graph-traverse.inc
 GUI_CFLAGS=$(VKDT_GLFW_CFLAGS) -I../ext/imgui -I../ext/imgui/backends/
+
+ifneq ($(origin MSYSTEM), environment)
 GUI_LDFLAGS=-ldl $(VKDT_GLFW_LDFLAGS) -lm -lstdc++
+else
+GUI_LDFLAGS=
+GUI_CFLAGS+= -DIMGUI_DISABLE_WIN32_FUNCTIONS
+endif
+GUI_LDFLAGS+=$(VKDT_GLFW_LDFLAGS) -lm -lstdc++
 
 ifeq ($(VKDT_USE_FREETYPE),1)
 GUI_CFLAGS+=$(shell pkg-config --cflags freetype2) -DVKDT_USE_FREETYPE=1

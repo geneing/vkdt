@@ -11,18 +11,30 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "core/compat.h"
 
-void
-dt_db_init(dt_db_t *db)
-{
-  memset(db, 0, sizeof(*db));
-  db->current_imgid = -1u;
-  db->current_colid = -1u;
-  snprintf(db->basedir, sizeof(db->basedir), "%s/.config/vkdt", getenv("HOME"));
-  mkdir(db->basedir, 0755);
-  // probably read preferences here from config file instead:
-  db->collection_sort = s_prop_filename;
+int is_file( const char* filename ){
+  struct stat statbuf = {0};
+  stat(filename, &statbuf);
+
+#if defined(S_ISLNK)
+  return (S_ISREG(statbuf.st_mode) || S_ISLNK(statbuf.st_mode)) ;
+#else
+  return (S_ISREG(statbuf.st_mode));
+#endif
 }
+
+  void
+  dt_db_init(dt_db_t *db)
+  {
+    memset(db, 0, sizeof(*db));
+    db->current_imgid = -1u;
+    db->current_colid = -1u;
+    snprintf(db->basedir, sizeof(db->basedir), "%s/.config/vkdt", getenv("HOME"));
+    mkdir_(db->basedir, 0755);
+    // probably read preferences here from config file instead:
+    db->collection_sort = s_prop_filename;
+  }
 
 void
 dt_db_cleanup(dt_db_t *db)
@@ -186,8 +198,11 @@ void dt_db_load_directory(
   db->image_max = 0;
   while((ep = readdir(dp)))
   {
-    if(ep->d_type != DT_REG && ep->d_type != DT_LNK) continue;
-    if(!dt_db_accept_filename(ep->d_name)) continue;
+
+    if(!is_file(ep->d_name)) 
+      continue;
+    if(!dt_db_accept_filename(ep->d_name)) 
+      continue;
     db->image_max++;
   }
 
@@ -213,8 +228,10 @@ void dt_db_load_directory(
   clock_t beg = clock();
   while((ep = readdir(dp)))
   {
-    if(ep->d_type != DT_REG && ep->d_type != DT_LNK) continue;
-    if(!dt_db_accept_filename(ep->d_name)) continue;
+    if(!is_file(ep->d_name)) 
+      continue;
+    if(!dt_db_accept_filename(ep->d_name)) 
+      continue;
 
     const uint32_t imgid = db->image_cnt++;
     image_init(db->image + imgid);
@@ -490,13 +507,14 @@ int dt_db_add_to_collection(const dt_db_t *db, const uint32_t imgid, const char 
   uint32_t hash = murmur_hash3(filename, strlen(filename), 1337);
   char dirname[1040];
   snprintf(dirname, sizeof(dirname), "%s/tags", db->basedir);
-  mkdir(dirname, 0755);
+  mkdir_(dirname, 0755);
   snprintf(dirname, sizeof(dirname), "%s/tags/%s", db->basedir, cname);
-  mkdir(dirname, 0755); // ignore error, might exist already (which is fine)
+  mkdir_(dirname, 0755); // ignore error, might exist already (which is fine)
   char linkname[1040];
   snprintf(linkname, sizeof(linkname), "%s/tags/%s/%x.cfg", db->basedir, cname, hash);
   int err = symlink(filename, linkname);
-  if(err) return 1;
+  if(err) 
+    return 1;
   return 0;
 }
 

@@ -22,13 +22,16 @@
 #include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
+#ifndef __MINGW32__
 #include <sys/prctl.h>
-#include <sys/types.h>
 #include <sys/wait.h>
+#endif
+#include <sys/types.h>
 
 static void
 dt_sigsegv_handler(int param)
 {
+#ifndef __MINGW32__
   char filename[PATH_MAX];
   snprintf(filename, sizeof(filename), "/tmp/vkdt-bt-%d.txt", (int)getpid());
   FILE *f = fopen(filename, "wb");
@@ -43,7 +46,7 @@ dt_sigsegv_handler(int param)
 
   int delete_file = 0;
   pid_t pid;
-  if((pid = fork()) != -1)
+  if ((pid = fork()) != -1)
   {
     if(pid)
     { // allow the child to ptrace us
@@ -67,6 +70,7 @@ dt_sigsegv_handler(int param)
     fprintf(stderr, "an error occurred while trying to execute gdb.\n");
   }
   if(delete_file) unlink(filename);
+#endif
   exit(1);
 }
 

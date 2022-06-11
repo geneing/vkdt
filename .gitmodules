@@ -4,3 +4,6 @@
 [submodule "ext/imgui"]
 	path = ext/imgui
 	url = https://github.com/hanatos/imgui.git
+[submodule "ext/dlfcn-win32"]
+	path = ext/dlfcn-win32
+	url = https://github.com/dlfcn-win32/dlfcn-win32.git

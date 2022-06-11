@@ -548,7 +548,7 @@ darkroom_enter()
   {
     dt_log(s_log_err|s_log_gui, "individual config %s not found, loading default!", graph_cfg);
     dt_db_image_path(&vkdt.db, imgid, imgfilename, sizeof(imgfilename));
-    realpath(imgfilename, realimg);
+    realpath_(imgfilename, realimg, PATH_MAX);
     int len = strlen(realimg);
     assert(len > 4);
     realimg[len-4] = 0; // cut away ".cfg"

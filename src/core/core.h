@@ -4,8 +4,18 @@
 #include <stdint.h>
 #include <time.h>
 #include <sys/time.h>
-// some random helpers
 
+
+#ifndef __MINGW32__
+  #define aligned_free_(p) free(p);
+  #define mkdir_(path, mode) mkdir(path, mode)
+#else
+  #define aligned_alloc(alignment, nsize) _aligned_malloc(nsize, alignment)
+  #define aligned_free_(p) _aligned_free(p)
+  #define mkdir_(path, mode) mkdir(path)
+#endif
+
+// some random helpers
 #define MIN(a,b) \
 ({ __typeof__ (a) _a = (a); \
    __typeof__ (b) _b = (b); \
@@ -25,10 +35,14 @@ dt_realloc(void *p, uint64_t *size, uint64_t addr)
   if(*size > addr) return p;
   const uint64_t align = 32;
   uint64_t nsize = ((16+2*addr + align-1)/align)*align;
+
+
   void *n = aligned_alloc(32, nsize);
+  
   if(*size) memcpy(n, p, *size);
   *size = nsize;
-  free(p);
+
+  aligned_free_(p);
   return n;
 }
 

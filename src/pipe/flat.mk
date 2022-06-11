@@ -29,3 +29,10 @@ pipe/raytrace.h\
 pipe/token.h
 PIPE_CFLAGS=
 PIPE_LDFLAGS=-ldl
+
+ifeq ($(origin MSYSTEM), environment)
+PIPE_O += ../ext/dlfcn-win32/src/dlfcn.o
+PIPE_H += ../ext/dlfcn-win32/src/dlfcn.h
+PIPE_CFLAGS += -I../ext/dlfcn-win32/src
+PIPE_LDFLAGS=
+endif

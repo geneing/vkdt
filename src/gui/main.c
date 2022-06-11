@@ -211,9 +211,13 @@ int main(int argc, char *argv[])
 
   char *filename = 0;
   char defpath[1024];
+  
   snprintf(defpath, sizeof(defpath), "%s/Pictures", getenv("HOME"));
-  if(argc > lastarg+1) filename = realpath(argv[lastarg+1], 0);
-  else                 filename = realpath(defpath, 0);
+  if(argc > lastarg+1) 
+    filename = realpath_(argv[lastarg+1], 0, 0);
+  else                 
+    filename = realpath_(defpath, 0, 0);
+
   if(dt_gui_init())
   {
     dt_log(s_log_gui|s_log_err, "failed to init gui/swapchain");
@@ -247,7 +251,8 @@ int main(int argc, char *argv[])
   dt_thumbnails_init(&vkdt.thumbnail_gen, 400, 400, 0, 0);
   dt_thumbnails_init(&vkdt.thumbnails, 400, 400, 3000, 1ul<<30);
   struct stat statbuf = {0};
-  if(filename) stat(filename, &statbuf);
+  if(filename) 
+    stat(filename, &statbuf);
   if(!filename || ((statbuf.st_mode & S_IFMT) == S_IFDIR))
   {
     vkdt.view_mode = s_view_lighttable;

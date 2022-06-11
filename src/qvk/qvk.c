@@ -27,7 +27,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
-#include <execinfo.h>
+//#include <execinfo.h>
 
 qvk_t qvk =
 {

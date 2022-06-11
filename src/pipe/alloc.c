@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include "core/compat.h"
 
 void
 dt_vkalloc_init(dt_vkalloc_t *a, uint64_t pool_size, uint64_t bytesize)

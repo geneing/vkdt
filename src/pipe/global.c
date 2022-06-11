@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <locale.h>
 
+#include <stdlib.h>
+
 #ifdef __FreeBSD__
 #include <sys/sysctl.h>
 #endif
@@ -367,8 +369,10 @@ int dt_pipe_global_init()
   memset(&dt_pipe, 0, sizeof(dt_pipe));
   (void)setlocale(LC_ALL, "C"); // make sure we write and parse floats correctly
   // setup search directory
-#ifdef __linux__
+#if defined(__linux__) 
   realpath("/proc/self/exe", dt_pipe.basedir);
+#elif defined(__MINGW32__)
+  _fullpath(dt_pipe.basedir, "/proc/self/exe", PATH_MAX);
 #elif defined(__FreeBSD__)
   int mib_procpath[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
   size_t len_procpath = sizeof(dt_pipe.basedir);
@@ -377,8 +381,13 @@ int dt_pipe_global_init()
 #error port me
 #endif
   char *c = 0;
-  for(int i=0;dt_pipe.basedir[i]!=0;i++) if(dt_pipe.basedir[i] == '/') c = dt_pipe.basedir+i;
-  if(c) *c = 0; // get dirname, i.e. strip off executable name
+  
+  for(int i=0; dt_pipe.basedir[i]!=0; i++) 
+    if(dt_pipe.basedir[i] == '/') 
+      c = dt_pipe.basedir+i;
+  if(c) 
+    *c = 0; // get dirname, i.e. strip off executable name
+  
   char mod[PATH_MAX+20];
   snprintf(mod, sizeof(mod), "%s/modules", dt_pipe.basedir);
   struct dirent *dp;
@@ -390,18 +399,26 @@ int dt_pipe_global_init()
   }
   int i = 0;
   while((dp = readdir(fd)))
-    if(dp->d_type == DT_DIR) i++;
+  {
+    struct stat fstat;
+    stat(dp->d_name, &fstat);
+    if (S_ISDIR(fstat.st_mode))
+      i++;
+  }
   dt_pipe.num_modules = i;
   dt_pipe.module = malloc(sizeof(dt_module_so_t)*dt_pipe.num_modules);
   i = 0;
   rewinddir(fd);
   while((dp = readdir(fd)))
   {
-    if(dp->d_type == DT_DIR)
-    {
-      int err = dt_module_so_load(dt_pipe.module + i, dp->d_name);
-      if(!err) i++;
-    }
+    struct stat fstat;
+    stat(dp->d_name, &fstat);
+    if (S_ISDIR(fstat.st_mode))
+      {
+        int err = dt_module_so_load(dt_pipe.module + i, dp->d_name);
+        if (!err)
+          i++;
+      }
   }
   dt_pipe.num_modules = i;
   closedir(fd);

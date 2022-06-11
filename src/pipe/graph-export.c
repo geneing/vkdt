@@ -7,6 +7,7 @@
 
 #include <libgen.h>
 #include <unistd.h>
+#include "core/compat.h"
 
 // export convenience functions, see cli/main.c
 
