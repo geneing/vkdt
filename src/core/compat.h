@@ -49,3 +49,5 @@ char *realpath_(const char *path, char *resolved_path, size_t maxLength);
 #else
 char *realpath_(const char *path, char *resolved_path, size_t maxLength);
 #endif
+
+int getNumberOfCores(void);

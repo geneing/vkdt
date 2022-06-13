@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <math.h>
+#include "core/compat.h"
 
 dt_gui_t vkdt = {0};
 

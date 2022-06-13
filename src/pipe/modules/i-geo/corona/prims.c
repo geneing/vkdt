@@ -4,7 +4,15 @@
 #include <assert.h>
 #include <string.h>
 #include <float.h>
+
+#ifndef __MINGW32__
 #include <sys/mman.h>
+#else
+#include "mman.h"
+#define readahead(...) {;}
+#include "core/compat.h"
+#endif
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>

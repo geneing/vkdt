@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <zlib.h>
-
+#include "core/compat.h"
 
 void modify_roi_in(
     dt_graph_t  *graph,

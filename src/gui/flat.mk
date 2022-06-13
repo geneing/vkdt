@@ -23,7 +23,7 @@ GUI_H=gui/gui.h\
       pipe/graph-traverse.inc
 GUI_CFLAGS=$(VKDT_GLFW_CFLAGS) -I../ext/imgui -I../ext/imgui/backends/
 
-ifneq ($(origin MSYSTEM), environment)
+ifneq ($(MINGW_BUILD), 1)
 GUI_LDFLAGS=-ldl $(VKDT_GLFW_LDFLAGS) -lm -lstdc++
 else
 GUI_LDFLAGS=

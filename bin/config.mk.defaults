@@ -76,4 +76,9 @@ AR=ar
 # again, this is important for building packages for distros.
 RAWSPEED_PACKAGE_BUILD=0
 
-export CC CXX GLSLC OPT_CFLAGS OPT_LDFLAGS AR RAWSPEED_PACKAGE_BUILD
+ifeq ($(origin MINGW_BUILD),undefined)
+ifeq ($(origin MSYSTEM), environment)
+MINGW_BUILD=1
+endif
+endif
+export CC CXX GLSLC OPT_CFLAGS OPT_LDFLAGS AR RAWSPEED_PACKAGE_BUILD MINGW_BUILD

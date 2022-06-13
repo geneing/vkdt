@@ -29,9 +29,13 @@ install: all
 	cp -rfL bin/default* ${VKDTDIR}
 	cp -rfL bin/darkroom.ui ${VKDTDIR}
 	cp -rfL bin/thumb.cfg ${VKDTDIR}
+ifneq ($(MINGW_BUILD), 1)
 	ln -rsf ${VKDTDIR}/vkdt $(DESTDIR)$(prefix)/bin/vkdt
 	ln -rsf ${VKDTDIR}/vkdt-cli $(DESTDIR)$(prefix)/bin/vkdt-cli
-
+else
+	rsync -avP ${VKDTDIR}/vkdt $(DESTDIR)$(prefix)/bin/vkdt
+	rsync -avP ${VKDTDIR}/vkdt-cli $(DESTDIR)$(prefix)/bin/vkdt-cli
+endif
 VERSION=$(shell grep VERSION src/core/version.h | cut -d'"' -f2)
 release: Makefile src/core/version.h
 	@echo packing up version ${VERSION}
@@ -81,6 +85,10 @@ bin: src Makefile
 	cp -f src/vkdt-fit bin/
 	cp -f src/vkdt bin/
 	# should probably copy this for easier install, too:
+ifneq ($(MINGW_BUILD), 1)
 	ln -sf ../src/pipe/modules bin/
+else
+	rsync -avP src/pipe/modules bin/
+endif
 	cp ext/rawspeed/data/cameras.xml bin/data
 

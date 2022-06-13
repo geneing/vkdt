@@ -12,12 +12,13 @@
 
 extern "C" {
 #include "modules/api.h"
+#include "core/compat.h"
 
 static rawspeed::CameraMetaData *meta = 0;
 
 int rawspeed_get_number_of_processor_cores()
 {
-  return sysconf(_SC_NPROCESSORS_ONLN);
+  return omp_get_max_threads();
 }
 
 typedef struct rawinput_buf_t

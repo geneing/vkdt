@@ -1,6 +1,6 @@
 #include "pipe/graph-io.h"
 #include "modules/api.h"
-#include "pipe/io.h"
+#include "pipe/dt-io.h"
 #include "core/log.h"
 #include <libgen.h>
 #include <unistd.h>

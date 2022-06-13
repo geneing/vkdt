@@ -1,5 +1,5 @@
 #include "global.h"
-#include "io.h"
+#include "dt-io.h"
 #include "module.h"
 #include "graph.h"
 #include "core/log.h"
@@ -17,6 +17,10 @@
 
 #ifdef __FreeBSD__
 #include <sys/sysctl.h>
+#endif
+
+#ifdef __MINGW32__
+#include <windows.h>
 #endif
 
 dt_pipe_global_t dt_pipe;
@@ -372,7 +376,9 @@ int dt_pipe_global_init()
 #if defined(__linux__) 
   realpath("/proc/self/exe", dt_pipe.basedir);
 #elif defined(__MINGW32__)
-  _fullpath(dt_pipe.basedir, "/proc/self/exe", PATH_MAX);
+{
+  GetModuleFileName(NULL, dt_pipe.basedir, PATH_MAX);
+}
 #elif defined(__FreeBSD__)
   int mib_procpath[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
   size_t len_procpath = sizeof(dt_pipe.basedir);

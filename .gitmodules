@@ -7,3 +7,6 @@
 [submodule "ext/dlfcn-win32"]
 	path = ext/dlfcn-win32
 	url = https://github.com/dlfcn-win32/dlfcn-win32.git
+[submodule "ext/mman-win32"]
+	path = ext/mman-win32
+	url = https://github.com/alitrack/mman-win32.git

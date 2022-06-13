@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <libgen.h>
+#include "core/compat.h"
 
 typedef struct jpgerr_t
 {
@@ -40,7 +41,7 @@ void write_sink(
   char dir[512];
   snprintf(dir, sizeof(dir), "%s", basename);
   dirname(dir);
-  mkdir(dir, 0755);
+  mkdir_(dir, 0755);
 
   char filename[512];
   snprintf(filename, sizeof(filename), "%s.jpg", basename);
