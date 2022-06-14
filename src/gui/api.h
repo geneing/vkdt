@@ -171,6 +171,26 @@ dt_gui_dr_toggle_fullscreen_view()
 }
 
 static inline void
+dt_gui_dr_toggle_history()
+{
+  vkdt.wstate.history_view ^= 1;
+  if(vkdt.wstate.history_view)
+  {
+    vkdt.state.center_x = vkdt.style.border_frac * qvk.win_width + vkdt.state.panel_wd;
+    vkdt.state.center_y = vkdt.style.border_frac * qvk.win_width;
+    vkdt.state.center_wd = qvk.win_width * (1.0f-2.0f*vkdt.style.border_frac) - 2*vkdt.state.panel_wd;
+    vkdt.state.center_ht = qvk.win_height - 2*vkdt.style.border_frac * qvk.win_width;
+  }
+  else
+  {
+    vkdt.state.center_x = vkdt.style.border_frac * qvk.win_width;
+    vkdt.state.center_y = vkdt.style.border_frac * qvk.win_width;
+    vkdt.state.center_wd = qvk.win_width * (1.0f-2.0f*vkdt.style.border_frac) - vkdt.state.panel_wd;
+    vkdt.state.center_ht = qvk.win_height - 2*vkdt.style.border_frac * qvk.win_width;
+  }
+}
+
+static inline void
 dt_gui_dr_enter_fullscreen_view()
 {
   if(!vkdt.wstate.fullscreen_view)
@@ -182,4 +202,14 @@ dt_gui_dr_leave_fullscreen_view()
 {
   if(vkdt.wstate.fullscreen_view)
     dt_gui_dr_toggle_fullscreen_view();
+}
+
+static inline void
+dt_gui_lt_duplicate()
+{
+  if(!vkdt.db.selection_cnt) return; // no images selected
+  dt_db_duplicate_selected_images(&vkdt.db); // just create .cfg files, don't update db
+  char dir[PATH_MAX]; // reload directory:
+  snprintf(dir, sizeof(dir), "%s", vkdt.db.dirname);
+  dt_gui_switch_collection(dir);
 }

@@ -43,11 +43,6 @@ int is_dir(const char *filename);
 
 int is_link(const char *filename);
 
-
-#ifndef __MINGW32__
 char *realpath_(const char *path, char *resolved_path, size_t maxLength);
-#else
-char *realpath_(const char *path, char *resolved_path, size_t maxLength);
-#endif
 
 int getNumberOfCores(void);

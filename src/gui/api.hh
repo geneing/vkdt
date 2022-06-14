@@ -3,6 +3,9 @@
 extern "C" {
 #include "api.h"
 #include "core/compat.h"
+#include "pipe/modules/api.h"
+#include "pipe/graph-io.h"
+#include "pipe/graph-export.h"
 }
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -18,7 +21,7 @@ extern "C" {
 // in particular, to realise modal dialogs, all modals are rendered
 // in the dt_gui_*_modals() callback.
 
-void
+inline void
 dt_gui_lt_modals()
 {
   if(ImGui::BeginPopupModal("assign tag", NULL, ImGuiWindowFlags_AlwaysAutoResize))
@@ -52,7 +55,7 @@ dt_gui_lt_modals()
   }
 }
 
-void
+inline void
 dt_gui_lt_assign_tag()
 {
   if(vkdt.db.selection_cnt <= 0)
@@ -61,10 +64,10 @@ dt_gui_lt_assign_tag()
     return;
   }
   ImGui::OpenPopup("assign tag");
-  g_busy += 5;
+  vkdt.wstate.busy += 5;
 }
 
-void
+inline void
 dt_gui_lt_toggle_select_all()
 {
   if(vkdt.db.selection_cnt > 0) // select none
@@ -74,13 +77,13 @@ dt_gui_lt_toggle_select_all()
       dt_db_selection_add(&vkdt.db, i);
 }
 
-void
+inline void
 dt_gui_lt_copy()
 {
   vkdt.wstate.copied_imgid = dt_db_current_imgid(&vkdt.db);
 }
 
-void
+inline void
 dt_gui_lt_paste_history()
 {
   if(vkdt.wstate.copied_imgid == -1u)
@@ -137,7 +140,7 @@ dt_gui_lt_paste_history()
       sel, vkdt.db.selection_cnt);
 }
 
-void
+inline void
 dt_gui_lt_export()
 {
   if(vkdt.db.selection_cnt <= 0)
@@ -178,14 +181,14 @@ dt_gui_lt_export()
 }
 
 // scroll to top of collection
-void
+inline void
 dt_gui_lt_scroll_top()
 {
   ImGui::SetScrollY(0.0f);
 }
 
 // scroll to show current image
-void
+inline void
 dt_gui_lt_scroll_current()
 {
   uint32_t colid = dt_db_current_colid(&vkdt.db);
@@ -196,7 +199,7 @@ dt_gui_lt_scroll_current()
 }
 
 // scroll to end of collection
-void
+inline void
 dt_gui_lt_scroll_bottom()
 {
   ImGui::SetScrollY(ImGui::GetScrollMaxY());
@@ -209,7 +212,7 @@ dt_gui_lt_scroll_bottom()
 // darkroom mode accessors
 // XXX these modals should likely go into render.cc or something else!
 // XXX they cannot be called from anywhere else and context still depends on them!
-void
+inline void
 dt_gui_dr_modals()
 {
   if(ImGui::BeginPopupModal("create preset", NULL, ImGuiWindowFlags_AlwaysAutoResize))
@@ -411,16 +414,16 @@ error:
 #undef FREE_ENT
 }
 
-void
+inline void
 dt_gui_dr_preset_create()
 {
   ImGui::OpenPopup("create preset");
-  g_busy += 5;
+  vkdt.wstate.busy += 5;
 }
 
-void
+inline void
 dt_gui_dr_preset_apply()
 {
   ImGui::OpenPopup("apply preset");
-  g_busy += 5;
+  vkdt.wstate.busy += 5;
 }
