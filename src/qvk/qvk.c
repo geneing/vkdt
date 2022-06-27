@@ -396,11 +396,13 @@ QVK_FEATURE_DO(inheritedQueries, 1)
     { // vendor ids are: nvidia 0x10de, intel 0x8086
       qvk.ticks_to_nanoseconds = dev_properties.limits.timestampPeriod;
       qvk.uniform_alignment    = dev_properties.limits.minUniformBufferOffsetAlignment;
-      for(int k=0;k<num_ext;k++)
+      for(int k=0;k<num_ext;k++){
+        //dt_log(s_log_qvk | s_log_err, "Extension: %s", ext_properties[k].extensionName);
         if (!strcmp(ext_properties[k].extensionName, VK_KHR_RAY_QUERY_EXTENSION_NAME))
           qvk.raytracing_supported = 1;
         else if (!strcmp(ext_properties[k].extensionName, VK_EXT_SHADER_ATOMIC_FLOAT_EXTENSION_NAME))
           qvk.float_atomics_supported = 1;
+      }
       if(dev_properties.vendorID == 0x1002) // this is AMD
         qvk.float_atomics_supported = 0;    // it seems they lie to us about support.
       picked_device = i;

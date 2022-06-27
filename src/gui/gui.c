@@ -6,8 +6,17 @@
 #include "pipe/dt-io.h"
 #include "pipe/modules/api.h"
 
+#ifdef __MINGW32__
+#define VK_USE_PLATFORM_WIN32_KHR
+#define GLFW_INCLUDE_VULKAN
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <windows.h>
+#include <vulkan/vulkan_win32.h>
+#include <GLFW/glfw3native.h>
+#else
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <float.h>
@@ -115,7 +124,11 @@ int dt_gui_init()
   /* create surface */
   if(glfwCreateWindowSurface(qvk.instance, qvk.window, NULL, &qvk.surface))
   {
-    dt_log(s_log_qvk|s_log_err, "could not create surface!");
+    const char *description;
+    int code = glfwGetError(&description);
+
+    dt_log(s_log_qvk|s_log_err, "could not create surface! Error: %s", description);
+
     return 1;
   }
 

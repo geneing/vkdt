@@ -21,6 +21,7 @@
 
 #ifdef __MINGW32__
 #include <windows.h>
+#include <shlwapi.h>
 #endif
 
 dt_pipe_global_t dt_pipe;
@@ -378,6 +379,7 @@ int dt_pipe_global_init()
 #elif defined(__MINGW32__)
 {
   GetModuleFileName(NULL, dt_pipe.basedir, PATH_MAX);
+  PathRemoveFileSpecA(dt_pipe.basedir);
 }
 #elif defined(__FreeBSD__)
   int mib_procpath[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };

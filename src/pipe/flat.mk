@@ -34,5 +34,5 @@ ifeq ($(MINGW_BUILD), 1)
 PIPE_O += ../ext/dlfcn-win32/src/dlfcn.o
 PIPE_H += ../ext/dlfcn-win32/src/dlfcn.h
 PIPE_CFLAGS += -I../ext/dlfcn-win32/src
-PIPE_LDFLAGS =
+PIPE_LDFLAGS = -lshlwapi
 endif

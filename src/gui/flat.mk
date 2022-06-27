@@ -31,12 +31,11 @@ GUI_H=gui/gui.h\
 GUI_CFLAGS=$(VKDT_GLFW_CFLAGS) -I../ext/imgui -I../ext/imgui/backends/
 
 ifneq ($(MINGW_BUILD), 1)
-GUI_LDFLAGS=-ldl $(VKDT_GLFW_LDFLAGS) -lm -lstdc++
+GUI_LDFLAGS=-ldl $(VKDT_GLFW_LDFLAGS) -lm -lstdc++ 
 else
-GUI_LDFLAGS=
+GUI_LDFLAGS=$(VKDT_GLFW_LDFLAGS) -lm -lstdc++ -lgdi32
 GUI_CFLAGS+= -DIMGUI_DISABLE_WIN32_FUNCTIONS
 endif
-GUI_LDFLAGS+=$(VKDT_GLFW_LDFLAGS) -lm -lstdc++
 
 ifeq ($(VKDT_USE_FREETYPE),1)
 GUI_CFLAGS+=$(shell pkg-config --cflags freetype2) -DVKDT_USE_FREETYPE=1
