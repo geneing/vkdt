@@ -3,6 +3,7 @@
 #include "module.h"
 #include "graph.h"
 #include "core/log.h"
+#include "core/fs.h"
 #include "modules/api.h"
 
 #include <sys/types.h>
@@ -374,8 +375,8 @@ int dt_pipe_global_init()
   memset(&dt_pipe, 0, sizeof(dt_pipe));
   (void)setlocale(LC_ALL, "C"); // make sure we write and parse floats correctly
   // setup search directory
-#if defined(__linux__) 
-  realpath("/proc/self/exe", dt_pipe.basedir);
+#if defined(__linux__)
+  fs_basedir(dt_pipe.basedir, sizeof(dt_pipe.basedir));
 #elif defined(__MINGW32__)
 {
   GetModuleFileName(NULL, dt_pipe.basedir, PATH_MAX);

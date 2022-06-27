@@ -8,6 +8,7 @@
 #include "gui/darkroom-util.h"
 #include "pipe/graph.h"
 #include "pipe/graph-io.h"
+#include "pipe/graph-defaults.h"
 #include "pipe/modules/api.h"
 #include "pipe/draw.h"
 #include "pipe/graph-history.h"
@@ -431,11 +432,7 @@ darkroom_keyboard(GLFWwindow *window, int key, int scancode, int action, int mod
   }
   else
 #endif
-  if(action == GLFW_PRESS && (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_CAPS_LOCK || key == GLFW_KEY_E))
-  {
-    dt_view_switch(s_view_lighttable);
-  }
-  else if(action == GLFW_PRESS && key == GLFW_KEY_SPACE)
+  if(action == GLFW_PRESS && key == GLFW_KEY_SPACE)
   {
     dt_gui_dr_next();
   }
@@ -554,12 +551,7 @@ darkroom_enter()
     int len = strlen(realimg);
     assert(len > 4);
     realimg[len-4] = 0; // cut away ".cfg"
-    if(!strcasecmp(realimg+len-8, ".mlv"))
-      input_module = dt_token("i-mlv");
-    if(!strcasecmp(realimg+len-8, ".pfm"))
-      input_module = dt_token("i-pfm");
-    if(!strcasecmp(realimg+len-8, ".jpg"))
-      input_module = dt_token("i-jpg");
+    input_module = dt_graph_default_input_module(realimg);
     snprintf(graph_cfg, sizeof(graph_cfg), "%s/default-darkroom.%"PRItkn, dt_pipe.basedir, dt_token_str(input_module));
     load_default = 1;
   }

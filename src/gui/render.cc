@@ -35,7 +35,7 @@ namespace { // anonymous gui state namespace
 
 inline void dark_corporate_style()
 {
-  ImGuiStyle & style = ImGui::GetStyle();
+  ImGuiStyle &style = ImGui::GetStyle();
   ImVec4 * colors = style.Colors;
 
 	/// 0 = FLAT APPEARENCE
@@ -124,7 +124,46 @@ inline void dark_corporate_style()
   }
 #endif
 }
+
+static ImFont *g_font[3] = {0};
 } // anonymous namespace
+
+ImFont *dt_gui_imgui_get_font(int which)
+{
+  return g_font[which];
+}
+
+float dt_gui_imgui_nav_button(int which)
+{
+  // TODO: look at io.AddKeyEvent() in newer imgui!
+  double time_now = ImGui::GetTime();
+  static double gamepad_time = ImGui::GetTime();
+  if(time_now - gamepad_time > 0.1)
+  {
+    int butt_cnt = 0;
+    const uint8_t *butt = vkdt.wstate.have_joystick ? glfwGetJoystickButtons(GLFW_JOYSTICK_1, &butt_cnt) : 0;
+    float res = 0.0f;
+    if(butt && butt[which]) res = butt[which];
+    if(res > 0.0f) gamepad_time = time_now;
+    return res;
+  }
+  return 0.0f;
+}
+
+float dt_gui_imgui_nav_input(int which)
+{
+  // TODO: look at io.AddKeyEvent() in newer imgui!
+  double time_now = ImGui::GetTime();
+  static double gamepad_time = ImGui::GetTime();
+  if(time_now - gamepad_time > 0.1)
+  {
+    ImGuiIO& io = ImGui::GetIO();
+    float nav = io.NavInputs[which];
+    if(nav > 0.0f) gamepad_time = time_now;
+    return nav;
+  }
+  return 0.0f;
+}
 
 extern "C" int dt_gui_init_imgui()
 {
@@ -132,8 +171,7 @@ extern "C" int dt_gui_init_imgui()
   // Setup Dear ImGui context
   ImGui::CreateContext();
   ImGuiIO& io = ImGui::GetIO(); (void)io;
-  // this works and looks really cool and useful (but collides with my own keys):
-  // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
   if(vkdt.wstate.have_joystick)
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableSetMousePos; //  | ImGuiBackendFlags_HasSetMousePos;
@@ -221,7 +259,9 @@ extern "C" int dt_gui_init_imgui()
   float fontsize = qvk.win_height / 55.0f * dpi_scale;
   // io.Fonts->AddFontFromFileTTF("data/OpenSans-Light.ttf", fontsize);
   snprintf(tmp, sizeof(tmp), "%s/data/Roboto-Regular.ttf", dt_pipe.basedir);
-  io.Fonts->AddFontFromFileTTF(tmp, fontsize);
+  g_font[0] = io.Fonts->AddFontFromFileTTF(tmp, fontsize);
+  g_font[1] = io.Fonts->AddFontFromFileTTF(tmp, 1.5*fontsize);
+  g_font[2] = io.Fonts->AddFontFromFileTTF(tmp, 2.0*fontsize);
   // io.Fonts->AddFontFromFileTTF("../ext/imgui/misc/fonts/Roboto-Medium.ttf", fontsize);
   //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
   //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
@@ -290,6 +330,8 @@ extern "C" void dt_gui_render_frame_imgui()
   ImGui_ImplVulkan_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
+  ImGuiIO& io = ImGui::GetIO();
+  if(io.KeysDown[GLFW_KEY_CAPS_LOCK]) io.NavInputs[ImGuiNavInput_Cancel] = 1.0f;
 
   switch(vkdt.view_mode)
   {
@@ -375,7 +417,7 @@ extern "C" int dt_gui_imgui_want_keyboard()
 }
 extern "C" int dt_gui_imgui_want_text()
 {
-  return ImGui::GetIO().WantTextInput;
+  return ImGui::GetIO().WantTextInput; // this is meant for onscreen keyboards for TextInputs
 }
 
 extern "C" void dt_gui_grab_mouse()

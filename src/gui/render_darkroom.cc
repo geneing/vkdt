@@ -9,7 +9,6 @@ extern "C"
 #include "gui/render_view.hh"
 #include "gui/hotkey.hh"
 #include "gui/api.hh"
-#include "gui/widget_filebrowser.hh" // XXX remove me (only use: load blocks)
 
 namespace { // anonymous namespace
 
@@ -415,6 +414,7 @@ uint64_t render_module(dt_graph_t *graph, dt_module_t *module, int connected)
 inline void draw_widget(int modid, int parid)
 {
   const dt_ui_param_t *param = vkdt.graph_dev.module[modid].so->param[parid];
+  if(!param) return;
   ImGuiIO& io = ImGui::GetIO();
 
   // skip if group mode does not match:
@@ -422,20 +422,14 @@ inline void draw_widget(int modid, int parid)
     if(dt_module_param_int(vkdt.graph_dev.module + modid, param->widget.grpid)[0] != param->widget.mode)
       return;
 
-  double time_now = ImGui::GetTime();
-  static double gamepad_time = ImGui::GetTime();
-  int axes_cnt = 0, butt_cnt = 0;
-  const uint8_t *butt = vkdt.wstate.have_joystick ? glfwGetJoystickButtons(GLFW_JOYSTICK_1, &butt_cnt) : 0;
-  const float   *axes = vkdt.wstate.have_joystick ? glfwGetJoystickAxes   (GLFW_JOYSTICK_1, &axes_cnt) : 0;
+  int axes_cnt = 0;
+  const float *axes = vkdt.wstate.have_joystick ? glfwGetJoystickAxes(GLFW_JOYSTICK_1, &axes_cnt) : 0;
   static int gamepad_reset = 0;
-  if(time_now - gamepad_time > 0.1 && butt && butt[12])
-  {
-    gamepad_reset = 1;
-    gamepad_time = time_now;
-  }
+  if(dt_gui_imgui_nav_button(12)) gamepad_reset = 1;
   // some state for double click detection for reset functionality
   static int doubleclick = 0;
   static double doubleclick_time = 0;
+  double time_now = ImGui::GetTime();
 #define RESETBLOCK \
   {\
     if(time_now - doubleclick_time > ImGui::GetIO().MouseDoubleClickTime) doubleclick = 0;\
@@ -570,6 +564,8 @@ inline void draw_widget(int modid, int parid)
               ImVec2(vkdt.state.panel_wd / 10.0, vkdt.state.panel_ht * 0.2), val,
               param->widget.min, param->widget.max, ""))
         RESETBLOCK {
+          if(io.KeyShift) // lockstep all three if shift is pressed
+            for(int k=3*(num/3);k<3*(num/3)+3;k++) val[k-num] = val[0];
           dt_graph_run_t flags = s_graph_run_none;
           if(vkdt.graph_dev.module[modid].so->check_params)
             flags = vkdt.graph_dev.module[modid].so->check_params(vkdt.graph_dev.module+modid, parid, &oldval);
@@ -580,7 +576,7 @@ inline void draw_widget(int modid, int parid)
         }
         KEYFRAME
         if (ImGui::IsItemActive() || ImGui::IsItemHovered())
-          ImGui::SetTooltip("%s %.3f", str, val[0]);
+          ImGui::SetTooltip("%s %.3f\nhold shift to lockstep rgb", str, val[0]);
 
         ImGui::PopStyleColor(4);
         if(parid < vkdt.graph_dev.module[modid].so->num_params - 1 ||
@@ -653,20 +649,13 @@ inline void draw_widget(int modid, int parid)
       if(vkdt.wstate.active_widget_modid == modid && vkdt.wstate.active_widget_parid == parid)
       {
         int accept = 0;
-        if(time_now - gamepad_time > 0.1)
+        if(dt_gui_imgui_nav_input(ImGuiNavInput_TweakFast) > 0.0f)
         {
-          if(io.NavInputs[ImGuiNavInput_TweakFast] > 0.0f)
-          {
-            vkdt.wstate.selected ++;
-            if(vkdt.wstate.selected == 4) vkdt.wstate.selected = 0;
-            gamepad_time = time_now;
-          }
-          if(io.NavInputs[ImGuiNavInput_Activate] > 0.0f)
-          {
-            accept = 1;
-            gamepad_time = time_now;
-          }
+          vkdt.wstate.selected ++;
+          if(vkdt.wstate.selected == 4) vkdt.wstate.selected = 0;
         }
+        if(dt_gui_imgui_nav_input(ImGuiNavInput_Activate) > 0.0f)
+          accept = 1;
         const float scale = vkdt.state.scale > 0.0f ? vkdt.state.scale : 1.0f;
         if(vkdt.wstate.selected >= 0 && axes)
         {
@@ -725,20 +714,14 @@ inline void draw_widget(int modid, int parid)
       if(vkdt.wstate.active_widget_modid == modid && vkdt.wstate.active_widget_parid == parid)
       {
         int accept = 0;
-        if(time_now - gamepad_time > 0.1)
+        if(dt_gui_imgui_nav_input(ImGuiNavInput_TweakFast) > 0.0f)
         {
-          if(io.NavInputs[ImGuiNavInput_TweakFast] > 0.0f)
-          {
-            vkdt.wstate.selected ++;
-            if(vkdt.wstate.selected == 4) vkdt.wstate.selected = 0;
-            gamepad_time = time_now;
-          }
-          if(io.NavInputs[ImGuiNavInput_Activate] > 0.0f)
-          {
-            accept = 1;
-            gamepad_time = time_now;
-          }
+          vkdt.wstate.selected ++;
+          if(vkdt.wstate.selected == 4) vkdt.wstate.selected = 0;
         }
+        if(dt_gui_imgui_nav_input(ImGuiNavInput_Activate) > 0.0f)
+          accept = 1;
+
         int axes_cnt = 0;
         const float* axes = vkdt.wstate.have_joystick ? glfwGetJoystickAxes(GLFW_JOYSTICK_1, &axes_cnt) : 0;
         const float scale = vkdt.state.scale > 0.0f ? vkdt.state.scale : 1.0f;
@@ -757,6 +740,7 @@ inline void draw_widget(int modid, int parid)
           vkdt.wstate.state[2] = .5f + MAX(1.0f,      aspect) * (vkdt.wstate.state[2] - .5f);
           vkdt.wstate.state[3] = .5f + MAX(1.0f,      aspect) * (vkdt.wstate.state[3] - .5f);
           widget_end();
+          darkroom_reset_zoom();
           dt_graph_history_append(&vkdt.graph_dev, modid, parid, throttle);
         }
       }
@@ -1283,7 +1267,6 @@ void render_darkroom_pipeline()
     else dt_graph_history_module(graph, new_modid);
   }
 
-  static dt_filebrowser_widget_t filebrowser = {{0}};
   // add block (read cfg snipped)
   if(gui.state == gui_state_data_t::s_gui_state_insert_block)
   {
@@ -1301,20 +1284,20 @@ void render_darkroom_pipeline()
   }
   else
   {
-    if(dt_filebrowser_display(&filebrowser, 'f'))
+    if(ImGui::BeginPopupModal("insert block", NULL, ImGuiWindowFlags_AlwaysAutoResize))
     { // "ok" pressed
-      fprintf(stderr, "read file: %s/%s\n", filebrowser.cwd, filebrowser.selected);
-      snprintf(gui.block_filename, sizeof(gui.block_filename), "%s/%s", filebrowser.cwd, filebrowser.selected);
-      dt_filebrowser_cleanup(&filebrowser); // reset all but cwd
-      gui.state = gui_state_data_t::s_gui_state_insert_block;
+      static char filter[256] = "";
+      int ok = filteredlist("%s/data/blocks", "%s/blocks", filter, gui.block_filename, sizeof(gui.block_filename), 0);
+      if(ok) ImGui::CloseCurrentPopup();
+      if(ok == 1)
+        gui.state = gui_state_data_t::s_gui_state_insert_block;
       // .. and render_module() will continue adding it using the data in gui.block* when the "insert before this" button is pressed.
+      ImGui::EndPopup();
     }
     if(ImGui::Button("insert block.."))
     {
-      // gui.state = gui_state_data_t::s_gui_state_insert_block;
       gui.block_token[0] = dt_token(mod_inst);
-      snprintf(filebrowser.cwd, sizeof(filebrowser.cwd), "%s/data/blocks", dt_pipe.basedir);
-      dt_filebrowser_open(&filebrowser);
+      ImGui::OpenPopup("insert block");
     }
   }
 }
@@ -1349,17 +1332,18 @@ void render_darkroom()
         dt_gui_dr_toggle_fullscreen_view();
       }
 
-      if(io.NavInputs[ImGuiNavInput_Cancel] > 0.0f)
+      if(dt_gui_imgui_nav_input(ImGuiNavInput_Cancel) > 0.0f)
       {
         dt_view_switch(s_view_lighttable);
         vkdt.wstate.set_nav_focus = 2; // introduce some delay because imgui nav has it too
         goto abort;
       }
+      // disable keyboard nav ctrl + shift to change images:
       else if(io.NavInputs[ImGuiNavInput_Menu] == 0.0f &&
-              io.NavInputs[ImGuiNavInput_TweakSlow] > 0.0f)
+              io.NavInputs[ImGuiNavInput_TweakSlow] > 0.0f && !io.KeyCtrl)
         dt_gui_dr_prev();
       else if(io.NavInputs[ImGuiNavInput_Menu] == 0.0f &&
-              io.NavInputs[ImGuiNavInput_TweakFast] > 0.0f)
+              io.NavInputs[ImGuiNavInput_TweakFast] > 0.0f && !io.KeyShift)
         dt_gui_dr_next();
       else if(0)
       {
@@ -1374,7 +1358,7 @@ abort:
     dt_node_t *out_main = dt_graph_get_display(&vkdt.graph_dev, dt_token("main"));
     if(out_main)
     {
-      if(butt && butt[11]) // left stick pressed
+      if(dt_gui_imgui_nav_button(11)) // left stick pressed
         darkroom_reset_zoom();
       if(axes)
       {
@@ -1564,11 +1548,11 @@ abort:
 
   { // right panel
     int hotkey = -1;
-    static double hotkey_time = 0;
+    static double hotkey_time = ImGui::GetTime();
     if(ImGui::GetTime() - hotkey_time > 0.1)
     {
       hotkey = ImHotKey::GetHotKey(hk_darkroom, sizeof(hk_darkroom)/sizeof(hk_darkroom[0]));
-      hotkey_time = ImGui::GetTime();
+      if(hotkey > -1) hotkey_time = ImGui::GetTime();
     }
     ImGui::SetNextWindowPos (ImVec2(qvk.win_width - vkdt.state.panel_wd, 0),   ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(vkdt.state.panel_wd, vkdt.state.panel_ht), ImGuiCond_Always);

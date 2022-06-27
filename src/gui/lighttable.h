@@ -1,17 +1,14 @@
 #pragma once
 
 #include "darkroom-util.h"
+#include "gui/api.h"
 
 static inline void
 lighttable_keyboard(GLFWwindow *w, int key, int scancode, int action, int mods)
 {
   if(action == GLFW_PRESS)
   {
-    if(key == GLFW_KEY_ESCAPE || key == GLFW_KEY_CAPS_LOCK)
-    {
-      dt_view_switch(s_view_files);
-    }
-    else if(key == GLFW_KEY_E)
+    if(key == GLFW_KEY_E)
     {
       if(dt_db_current_imgid(&vkdt.db) != -1u)
       {
@@ -56,3 +53,11 @@ lighttable_mouse_position(GLFWwindow* window, double x, double y) {}
 
 static inline void
 lighttable_mouse_scrolled(GLFWwindow* window, double xoff, double yoff) {}
+
+static inline int
+lighttable_enter()
+{
+  if(vkdt.wstate.history_view)    dt_gui_dr_toggle_history();
+  if(vkdt.wstate.fullscreen_view) dt_gui_dr_toggle_fullscreen_view();
+  return 0;
+}

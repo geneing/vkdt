@@ -1,7 +1,6 @@
 #include "gui/view.h"
 #include "gui/darkroom.h"
 #include "gui/lighttable.h"
-#include "gui/files.h"
 #include "gui/render.h"
 
 int
@@ -22,6 +21,9 @@ dt_view_switch(dt_gui_view_t view)
   {
     case s_view_darkroom:
       err = darkroom_enter();
+      break;
+    case s_view_lighttable:
+      err = lighttable_enter();
       break;
     default:;
   }
@@ -86,7 +88,7 @@ dt_view_mouse_scrolled(GLFWwindow *window, double xoff, double yoff)
 void
 dt_view_keyboard(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
-  if(!vkdt.wstate.grabbed && dt_gui_imgui_want_keyboard()) return;
+  if(!vkdt.wstate.grabbed && dt_gui_imgui_want_text()) return;
   switch(vkdt.view_mode)
   {
   case s_view_darkroom:
@@ -94,9 +96,6 @@ dt_view_keyboard(GLFWwindow *window, int key, int scancode, int action, int mods
     break;
   case s_view_lighttable:
     lighttable_keyboard(window, key, scancode, action, mods);
-    break;
-  case s_view_files:
-    files_keyboard(window, key, scancode, action, mods);
     break;
   default:;
   }

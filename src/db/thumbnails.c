@@ -4,6 +4,7 @@
 #include "db/murmur3.h"
 #include "qvk/qvk.h"
 #include "pipe/graph-io.h"
+#include "pipe/graph-defaults.h"
 #include "pipe/graph-export.h"
 #include "pipe/modules/api.h"
 #include "pipe/dlist.h"
@@ -224,16 +225,7 @@ dt_thumbnails_cache_one(
   // use ~/.cache/vkdt/<murmur3-of-filename>.bc1 as output file name
   // if that already exists with a newer timestamp than the cfg, bail out
 
-  dt_token_t input_module = dt_token("i-raw");
-  if(len >= 9)
-  {
-    if(!strncasecmp(f2-4, ".mlv", 4))
-      input_module = dt_token("i-mlv");
-    else if(!strncasecmp(f2-4, ".pfm", 4))
-      input_module = dt_token("i-pfm");
-    else if(!strncasecmp(f2-4, ".jpg", 4))
-      input_module = dt_token("i-jpg");
-  }
+  dt_token_t input_module = dt_graph_default_input_module(filename);
   char cfgfilename[PATH_MAX+100];
   char deffilename[PATH_MAX+100];
   char bc1filename[PATH_MAX+100];
@@ -300,8 +292,6 @@ typedef struct cache_coll_job_t
 {
   uint64_t stamp;
   threads_mutex_t mutex_storage;
-  uint32_t idx_storage;
-  uint32_t done;
   uint32_t gid;
   threads_mutex_t *mutex;
   dt_thumbnails_t *tn;
@@ -370,6 +360,7 @@ dt_thumbnails_cache_list(
   uint32_t *collection = malloc(sizeof(uint32_t) * imgid_cnt);
   memcpy(collection, imgid, sizeof(uint32_t) * imgid_cnt); // take copy because this thing changes
   cache_coll_job_t *job = malloc(sizeof(cache_coll_job_t)*DT_THUMBNAILS_THREADS);
+  int taskid = -1;
   for(int k=0;k<DT_THUMBNAILS_THREADS;k++)
   {
     if(k == 0)
@@ -394,17 +385,13 @@ dt_thumbnails_cache_list(
     };
     // we only care about internal errors. if we call with stupid values,
     // it just does nothing and returns:
-    int res = threads_task(
+    taskid = threads_task(
         imgid_cnt,
-        &job[0].idx_storage,
-        &job[0].done,
+        taskid,
         job+k,
         thread_work_coll,
         thread_free_coll);
-    assert(-1 != res);
-#ifdef NDEBUG
-    (void)res;
-#endif
+    assert(taskid != -1); // only -1 is fatal
   }
   return VK_SUCCESS;
 }
