@@ -18,11 +18,11 @@ MKCLUT_DEPS=core/inpaint.h \
      core/solve.h \
      core/clip.h
 
-../bin/vkdt-mkssf: tools/clut/src/mkssf.c ${MKSSF_DEPS} Makefile
-	$(CC) $(CFLAGS) $(EXE_CFLAGS) $(OPT_CFLAGS) $(ADD_CFLAGS) $< -o $@ $(LDFLAGS) $(ADD_LDFLAGS)
+../bin/vkdt-mkssf: tools/clut/src/mkssf.c core/compat.c ${MKSSF_DEPS} Makefile
+	$(CC) $(CFLAGS) $(EXE_CFLAGS) $(OPT_CFLAGS) $(ADD_CFLAGS) $< core/compat.c -o $@ $(LDFLAGS) $(ADD_LDFLAGS)
 
-../bin/vkdt-mkclut: tools/clut/src/mkclut.c ${MKCLUT_DEPS} Makefile
-	$(CC) $(CFLAGS) $(EXE_CFLAGS) $(OPT_CFLAGS) $(ADD_CFLAGS) $< -o $@ $(LDFLAGS) $(ADD_LDFLAGS)
+../bin/vkdt-mkclut: tools/clut/src/mkclut.c core/compat.c ${MKCLUT_DEPS} Makefile
+	$(CC) $(CFLAGS) $(EXE_CFLAGS) $(OPT_CFLAGS) $(ADD_CFLAGS) $< core/compat.c -o $@ $(LDFLAGS) $(ADD_LDFLAGS)
 
 ../bin/data/spectra.lut: mkabney macadam.lut Makefile
 	@echo "[tools] precomputing rgb to spectrum upsampling table.."
@@ -32,9 +32,9 @@ MKCLUT_DEPS=core/inpaint.h \
 macadam.lut: macadam
 	./macadam
 
-macadam: tools/spec/macadam.c core/threads.c Makefile
+macadam: tools/spec/macadam.c core/compat.c core/threads.c Makefile
 	@echo "[tools] precomputing max theoretical reflectance brightness.."
-	$(CC) $(CFLAGS) $(OPT_CFLAGS) $(EXE_CFLAGS) $(ADD_CFLAGS) $< core/threads.c -o $@ $(LDFLAGS) $(ADD_LDFLAGS) -pthread
+	$(CC) $(CFLAGS) $(OPT_CFLAGS) $(EXE_CFLAGS) $(ADD_CFLAGS) $< core/compat.c core/threads.c -o $@ $(LDFLAGS) $(ADD_LDFLAGS) -pthread
 
-mkabney: tools/spec/createlut.c core/threads.c Makefile
-	$(CC) $(CFLAGS) $(OPT_CFLAGS) $(EXE_CFLAGS) $(ADD_CFLAGS) $< core/threads.c -o $@ $(LDFLAGS) $(ADD_LDFLAGS) -pthread
+mkabney: tools/spec/createlut.c core/compat.c core/threads.c  Makefile
+	$(CC) $(CFLAGS) $(OPT_CFLAGS) $(EXE_CFLAGS) $(ADD_CFLAGS) $< core/compat.c core/threads.c -o $@ $(LDFLAGS) $(ADD_LDFLAGS) -pthread

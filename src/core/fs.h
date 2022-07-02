@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include "compat.h"
 
 #ifdef __MINGW32__
 typedef off64_t loff_t;
@@ -81,8 +82,8 @@ fs_basedir(
     char *basedir,  // output will be copied here
     size_t maxlen)  // allocation size
 {
-#ifdef __linux__
-  realpath("/proc/self/exe", basedir);
+#if defined(__linux__) || defined(__MINGW32__)
+  realpath_("/proc/self/exe", basedir, maxlen);
 #elif defined(__FreeBSD__)
   int mib_procpath[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
   size_t len_procpath = maxlen;

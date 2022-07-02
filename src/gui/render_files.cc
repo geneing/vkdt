@@ -267,7 +267,7 @@ void render_files()
     if(dt_gui_imgui_nav_input(ImGuiNavInput_Input) > 0.0f) // triangle or enter
     { // open selected in lt without changing cwd
       char newdir[PATH_MAX];
-      if(filebrowser.selected_type == DT_DIR)
+      if(filebrowser.selected_type)
       {
         snprintf(newdir, sizeof(newdir), "%s%s", filebrowser.cwd, filebrowser.selected);
         dt_gui_switch_collection(newdir);

@@ -40,8 +40,8 @@ namespace {
 
 int dt_filebrowser_sort_dir_first(const struct dirent **a, const struct dirent **b)
 {
-  if((*a)->d_type == DT_DIR && (*b)->d_type != DT_DIR) return 0;
-  if((*a)->d_type != DT_DIR && (*b)->d_type == DT_DIR) return 1;
+  if(is_dir((*a)->d_name) && !is_dir((*b)->d_name)) return 0;
+  if(!is_dir((*a)->d_name) && is_dir((*b)->d_name)) return 1;
   return strcmp((*a)->d_name, (*b)->d_name);
 }
 
@@ -100,7 +100,7 @@ dt_filebrowser(
     if(select)
     {
       w->selected = w->ent[i]->d_name; // mark as selected
-      w->selected_type = w->ent[i]->d_type;
+      w->selected_type = is_dir(w->ent[i]->d_name)?1:0;
       if ((dt_gui_imgui_nav_input(ImGuiNavInput_Activate) > 0.0f ||
            ImGui::IsMouseDoubleClicked(0)) &&
           is_dir(w->ent[i]->d_name))

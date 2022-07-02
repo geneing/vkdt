@@ -5,7 +5,9 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
-
+extern "C"{
+  #include "core/compat.h"
+}
 // displays a filtered list of directory entries.
 // this is useful to select from existing presets, blocks, tags, etc.
 // call this between BeginPopupModal and EndPopup.

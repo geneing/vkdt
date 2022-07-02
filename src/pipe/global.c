@@ -378,10 +378,7 @@ int dt_pipe_global_init()
 #if defined(__linux__)
   fs_basedir(dt_pipe.basedir, sizeof(dt_pipe.basedir));
 #elif defined(__MINGW32__)
-{
   GetModuleFileName(NULL, dt_pipe.basedir, PATH_MAX);
-  PathRemoveFileSpecA(dt_pipe.basedir);
-}
 #elif defined(__FreeBSD__)
   int mib_procpath[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
   size_t len_procpath = sizeof(dt_pipe.basedir);
@@ -389,16 +386,22 @@ int dt_pipe_global_init()
 #else
 #error port me
 #endif
+#if defined(__MINGW32__)
+  PathRemoveFileSpecA(dt_pipe.basedir);
+#else
   char *c = 0;
-  
-  for(int i=0; dt_pipe.basedir[i]!=0; i++) 
-    if(dt_pipe.basedir[i] == '/') 
-      c = dt_pipe.basedir+i;
-  if(c) 
+
+  for (int i = 0; dt_pipe.basedir[i] != 0; i++)
+    if (dt_pipe.basedir[i] == '/')
+      c = dt_pipe.basedir + i;
+  if (c)
     *c = 0; // get dirname, i.e. strip off executable name
+#endif
+
+  char mod[PATH_MAX];
+  snprintf(mod, sizeof(mod), "%s/modules/", dt_pipe.basedir);
+  int len = strlen(mod);
   
-  char mod[PATH_MAX+20];
-  snprintf(mod, sizeof(mod), "%s/modules", dt_pipe.basedir);
   struct dirent *dp;
   DIR *fd = opendir(mod);
   if (!fd)
@@ -406,11 +409,16 @@ int dt_pipe_global_init()
     dt_log(s_log_pipe, "[global init] cannot open modules directory!");
     return 1;
   }
+
   int i = 0;
   while((dp = readdir(fd)))
   {
+    if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
+      continue;
+
     struct stat fstat;
-    stat(dp->d_name, &fstat);
+    strncpy(mod + len, dp->d_name, PATH_MAX - len);
+    stat(mod, &fstat);
     if (S_ISDIR(fstat.st_mode))
       i++;
   }
@@ -420,8 +428,11 @@ int dt_pipe_global_init()
   rewinddir(fd);
   while((dp = readdir(fd)))
   {
+    if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
+      continue;
+    strncpy(mod + len, dp->d_name, PATH_MAX - len);
     struct stat fstat;
-    stat(dp->d_name, &fstat);
+    stat(mod, &fstat);
     if (S_ISDIR(fstat.st_mode))
       {
         int err = dt_module_so_load(dt_pipe.module + i, dp->d_name);
